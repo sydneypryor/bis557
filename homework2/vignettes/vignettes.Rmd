@@ -1,0 +1,184 @@
+---
+title: "Vignettes"
+author: "Sydney Pryor"
+date: "October 10, 2019"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignettes}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Q1: CASL 2.11 Ex. 5
+# Consider simple regression model with a scalar x and intercept:
+$$
+y = {\beta}_0 + {\beta}_1 * x
+$$
+# Using explicit formula for the inverse of a 2-by-2 matrix, write down the least squares estimators for betahat0 and betahat1.
+
+SLR model: $Y = X\beta$
+$$
+\mathbf{Y}_{n \times 1} = \left[\begin{array}
+{ccc}
+y_{1} \\
+y_{2}  \\
+...  \\
+y_{n}  \\
+\end{array}\right] \hspace{1cm}
+\mathbf{X}_{n \times 2} = \left[\begin{array}
+{ccc}
+1 & x_{1} \\
+1 & x_{2}  \\
+...  & ...\\
+1 & x_{n}  \\
+\end{array}\right] \hspace{1cm}
+\mathbf{\beta} = \left[\begin{array}
+{ccc}
+\beta_{0} \\
+\beta_{1}  \\
+\end{array}\right]
+$$
+SOLVE USING INVERSE 2X2 MATRIX FORMULA
+$$
+y = {\beta}_0 + {\beta}_1 * x
+$$
+
+$$
+X'X = \mathbf{X}_{n \times 2} = \left[\begin{array}
+{ccc}
+n & \sum x_i \\
+\sum x_i & \sum x_i^2  \\
+\end{array}\right]
+$$
+
+$$
+A = \left[\begin{array}
+{ccc}
+a & b \\
+c & d  \\
+\end{array}\right] \hspace{1cm} 
+
+A' = \frac{1}{ad-bc}\left[\begin{array}
+{ccc}
+d & -b \\
+-c & a  \\
+\end{array}\right] 
+$$
+
+$$
+(X'X)^{-1} = \frac{1}{n \sum x_i^2 - (\sum x_i)^2}\left[\begin{array}
+{ccc}
+\sum x_i)^2 & -\sum x_i) \\
+-\sum x_i) & n  \\
+\end{array}\right]
+$$
+$$
+X'Y = \left[\begin{array}
+{ccc}
+1 & 1 & ... & 1 \\
+x_1 & x_2 & ... & x_n  \\
+\end{array}\right] \left[\begin{array}
+{ccc}
+y_1 \\
+y_2 \\
+... \\
+y_n \\
+\end{array}\right]=\left[\begin{array}
+{ccc}
+\sum y_i \\
+\sum x_i y_i  \\
+\end{array}\right]
+$$
+
+$$
+\beta = \frac{1}{n \sum x_i^2 - (\sum x_i)^2}\left[\begin{array}
+{ccc}
+\sum x_i^2 & -\sum x_i) \\
+-\sum x_i & n  \\
+\end{array}\right]\left[\begin{array}
+{ccc}
+\sum y_i \\
+\sum x_i y_i  \\
+\end{array}\right]
+$$
+$$
+= \frac{1}{n \sum x_i^2 - (\sum x_i)^2}\left[\begin{array}
+{ccc}
+\sum x_i^2 \sum y_i - \sum x_i \sum x_i y_i \\
+-\sum x_i \sum y_i + n \sum x_i y_i  \\
+\end{array}\right]
+$$
+
+## Q4: reproduce CASL 2.8
+# Show using ridge regression increases numerical stability and decreases statistical error 
+When numerical stability decreases, beta estimate's error increases.
+
+```{r}
+n <- 1000; p <- 25
+beta <- c(1, rep(0, p-1))
+X  <- matrix(rnorm(n * p), ncol = p)
+svals <- svd(X)$d
+max(svals)/min(svals)
+N <- 1e4; `12_errors` <- rep(0, N)
+for (k in 1:N){
+  y <- X %*% beta + rnorm(n)
+  betahat <- casl_ols_svd(X, y)
+  `errors`[k] <- sqrt(sum((betahat - beta)^2))
+}
+mean(`12_errors`)
+```
+
+```{r}
+n <- 1000; p <- 25
+beta <- c(1, rep(0, p-1))
+X  <- matrix(rnorm(n * p), ncol = p)
+
+alpha <- 0.001
+X[,1] <- X[,1] * alpha + X[,2] * (1 - alpha)
+svals <- svd(X)$d
+max(svals) / min(svals)
+```
+
+```{r}
+N <- 1e4; l2_errors <- rep(0, N)  
+for (k in 1:N) {  
+  y <- X %*% beta + rnorm(n)  
+  betahat <- solve(crossprod(X), crossprod(X, y))  
+  l2_errors[k] <- sqrt(sum((betahat - beta)^2))  
+  }  
+mean(l2_errors) 
+```
+
+
+## Q5: LASSO Penalty
+LASSO PENALTY: 
+$$
+\frac{1}{2n} ||Y - X \beta||^2_2 + \lambda ||\beta||_1
+$$
+# Show that betahat Lasso must be zero 
+
+$$
+\text{For } \beta > 0: \frac{1}{2n} ||Y - X \beta||^2_2 + \lambda ||\beta||_1
+$$
+$$ 
+\frac{dl}{d\beta} = \frac{1}{n} (-X')(Y - X \beta) + \lambda = 0
+$$
+$$
+= (-X')(Y - X \beta) + n\lambda = 0
+$$
+$$
+-X'Y + X'X \beta + n\lambda = 0
+$$
+$$
+X'X \beta = X'Y - n\lambda
+$$
+$$
+\beta = (X'X)^{-1}[X'Y - n\lambda] = X'Y - n\lambda
+$$
+
+
+
